@@ -19,32 +19,15 @@ pub struct InitializeConfig<'info> {
         bump,
     )]
     pub config: Account<'info, Config>,
-    // this mint specifies the Token in which the fees are being paid in
-    #[account(
-        mint::token_program = token_program
-    )]
-    pub mint: InterfaceAccount<'info, Mint>,
-    /// Vault needed to collect payment fees
-    #[account(
-        init,
-        payer = admin,
-        associated_token::mint = mint,
-        associated_token::authority = config,
-        associated_token::token_program = token_program,
-    )]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 
 }
 
 impl<'info> InitializeConfig<'info> {
-    pub fn init_config(
+    pub fn initialize_config(
         &mut self, 
         fee: u16, 
         basis_points: u16, 
-        whitelist_mints: [Pubkey; 2],
         seed: u64,
         bumps: &InitializeConfigBumps
     ) -> Result<()> {
@@ -54,8 +37,6 @@ impl<'info> InitializeConfig<'info> {
                 admin: self.admin.key(),
                 fee,
                 basis_points,
-                whitelist_mints,
-                vault: self.vault.key(),
                 bump: bumps.config
             }
         );

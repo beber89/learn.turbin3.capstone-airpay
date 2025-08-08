@@ -13,6 +13,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createMint,
   getAssociatedTokenAddressSync,
+  getAccount,
 } from "@solana/spl-token";
 
 import { expect } from "chai";
@@ -30,7 +31,7 @@ describe("Capstone AirPay Q3 Tests", () => {
   let mint: PublicKey;
   let configAccount: PublicKey;
   let invoiceAccount: PublicKey;
-  let configVault: PublicKey;
+  let feeVault: PublicKey;
   let invoiceVault: PublicKey;
   
   // Test data
@@ -100,7 +101,7 @@ describe("Capstone AirPay Q3 Tests", () => {
     );
     
     // Get associated token account addresses
-    configVault = getAssociatedTokenAddressSync(
+    feeVault = getAssociatedTokenAddressSync(
       mint,
       configAccount,
       true, // allowOwnerOffCurve
@@ -119,25 +120,17 @@ describe("Capstone AirPay Q3 Tests", () => {
 
   describe("Test 1: Admin creates Config account", () => {
     it("Should successfully initialize a config account", async () => {
-      // Create whitelist mints array (using the same mint twice for simplicity)
-      const whitelistMints = [mint, mint];
-      
       // @note [debug] passing seed as last argument somehow messed up the function call !!
       try {
         const tx = await program.methods
           .initializeConfig(
             configSeed,
             fee,
-            basisPoints,
-            whitelistMints
+            basisPoints
           )
           .accountsPartial({
             admin: admin.publicKey,
             config: configAccount,
-            mint: mint,
-            vault: configVault,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
           })
           .signers([admin])
@@ -153,9 +146,6 @@ describe("Capstone AirPay Q3 Tests", () => {
         expect(configAccountData.admin.toString()).to.equal(admin.publicKey.toString());
         expect(configAccountData.fee).to.equal(fee);
         expect(configAccountData.basisPoints).to.equal(basisPoints);
-        expect(configAccountData.whitelistMints[0].toString()).to.equal(mint.toString());
-        expect(configAccountData.whitelistMints[1].toString()).to.equal(mint.toString());
-        expect(configAccountData.vault.toString()).to.equal(configVault.toString());
 
         
         console.log("✅ Config account created successfully!");
@@ -164,7 +154,6 @@ describe("Capstone AirPay Q3 Tests", () => {
           admin: configAccountData.admin.toString(),
           fee: configAccountData.fee,
           basisPoints: configAccountData.basisPoints,
-          vault: configAccountData.vault.toString(),
         });
 
       } catch (error) {
@@ -176,23 +165,16 @@ describe("Capstone AirPay Q3 Tests", () => {
 
     it("Should fail to initialize config with same seed twice", async () => {
 
-      const whitelistMints = [mint, mint];
-      
       try {
         await program.methods
           .initializeConfig(
             configSeed, // Same seed as before
             fee,
             basisPoints,
-            whitelistMints,
           )
           .accountsPartial({
             admin: admin.publicKey,
             config: configAccount,
-            mint: mint,
-            vault: configVault,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
           })
           .signers([admin])
@@ -209,7 +191,47 @@ describe("Capstone AirPay Q3 Tests", () => {
     });
   });
 
-  describe.skip("Test 2: Merchant creates InvoiceAccount", () => {
+  describe("Test 2: Admin sets a mint as a whitelist and creates a fee vault", () => {
+    it("Should successfully initialize a config account", async () => {
+      // @note [debug] passing seed as last argument somehow messed up the function call !!
+      try {
+        const tx = await program.methods
+          .setMintAsPayment(
+          )
+          .accountsPartial({
+            admin: admin.publicKey,
+            config: configAccount,
+            mint,
+            vault: feeVault,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([admin])
+          .rpc();
+
+
+        console.log("Config initialization transaction signature:", tx);
+
+        // Verify the vault account was created and initialized correctly
+        const feeVaultAccountData = await getAccount(provider.connection, feeVault);
+        
+        expect (feeVaultAccountData.isInitialized).to.be.true ;
+
+        
+        console.log("✅ Fee vault account created successfully!");
+        console.log("Fee Vault details:");
+
+      } catch (error) {
+        console.error("❌ Error setting fee vault :", error);
+        throw error;
+      }
+    });
+  });
+
+
+
+  describe.skip("Test 3: Merchant creates InvoiceAccount", () => {
     it("Should successfully initialize an invoice account", async () => {
       try {
         const tx = await program.methods

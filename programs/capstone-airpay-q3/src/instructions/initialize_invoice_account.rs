@@ -37,7 +37,7 @@ pub struct InitializeInvoiceAccount<'info> {
 }
 
 impl<'info> InitializeInvoiceAccount<'info> {
-    pub fn init_invoice_account(&mut self, seed: u64, bumps: &InitializeInvoiceAccountBumps) -> Result<()> {
+    pub fn initialize_invoice_account(&mut self, seed: u64, bumps: &InitializeInvoiceAccountBumps) -> Result<()> {
         self.invoice_account.set_inner(
             InvoiceAccount { 
                 seed, 

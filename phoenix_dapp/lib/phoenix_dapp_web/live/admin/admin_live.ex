@@ -37,12 +37,6 @@ defmodule PhoenixDappWeb.AdminLive do
     {:noreply, assign(socket, message: message)}
   end
 
-  # Handle the loading state from JavaScript
-  def handle_event("solana-balance-loading", %{"loading" => loading}, socket) do
-    socket = assign(socket, loading_balance: loading)
-    {:noreply, socket}
-  end
-
   # Handle the balance result from JavaScript
   def handle_event("solana-balance-result", params, socket) do
     socket = case params do
@@ -96,27 +90,10 @@ defmodule PhoenixDappWeb.AdminLive do
 
       <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Interacting with Solana using Gill</h2>
-        <p>Lamports Balance: <span id="gill-message-display"><%= @message %></span></p>
-        <button phx-hook="GillClient" id="program-initialize-config" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">
-          Gill Experiment 
+        <p>Lamports Balance: <span id="admin-sol-balance-display"><%= @message %></span></p>
+        <button phx-hook="AdminWeb3Client" id="admin-initialize-config" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">
+          Initialize Config 
         </button>
-      </div>
-
-      <div class="mb-6 p-4 border rounded-lg bg-gray-50">
-        <h2 class="text-xl font-semibold mb-2">Solana Balance Checker (JavaScript Client)</h2>
-        <p class="text-sm text-gray-600 mb-2">Network: Devnet</p>
-
-        <!-- Default Account Balance -->
-        <div class="mb-4 p-3 bg-white rounded border">
-          <button
-            phx-hook = "GetBalance"
-            id="get-sol-balance-js"
-            disabled={@loading_balance}
-            class="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-4 py-2 rounded transition-colors"
-          >
-            <%= if @loading_balance, do: "Loading...", else: "Get Balance (JS)" %>
-          </button>
-        </div>
       </div>
     </div>
     """
