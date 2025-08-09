@@ -17,6 +17,7 @@ import {
 } from "@solana/spl-token";
 
 import { expect } from "chai";
+import { timeStamp } from "console";
 
 
 describe("Capstone AirPay Q3 Tests", () => {
@@ -29,6 +30,7 @@ describe("Capstone AirPay Q3 Tests", () => {
   let admin: Keypair;
   let merchant: Keypair;
   let mint: PublicKey;
+  let mintB: PublicKey;
   let configAccount: PublicKey;
   let invoiceAccount: PublicKey;
   let feeVault: PublicKey;
@@ -37,6 +39,7 @@ describe("Capstone AirPay Q3 Tests", () => {
   // Test data
   const configSeed = new anchor.BN(5);
   const invoiceSeed = new anchor.BN(67890);
+  const invoiceItemSeed = new anchor.BN(678901);
   const fee = 250; // 2.5%
   const basisPoints = 10000;
   
@@ -74,6 +77,17 @@ describe("Capstone AirPay Q3 Tests", () => {
       undefined,
       TOKEN_PROGRAM_ID
     );
+    // Create a test mint
+    mintB = await createMint(
+      provider.connection,
+      admin,
+      admin.publicKey,
+      null,
+      6, // 6 decimals
+      undefined,
+      undefined,
+      TOKEN_PROGRAM_ID
+    );
     const configSeedBuffer = Buffer.alloc(8);
     configSeedBuffer.writeBigUInt64LE( BigInt(configSeed.toNumber() ));
     
@@ -95,6 +109,7 @@ describe("Capstone AirPay Q3 Tests", () => {
       [
         Buffer.from("invoice_account"),
         merchant.publicKey.toBuffer(),
+        mint.toBuffer(),
         invoiceSeed.toArrayLike(Buffer, "le", 8),
       ],
       program.programId
@@ -231,7 +246,43 @@ describe("Capstone AirPay Q3 Tests", () => {
 
 
 
-  describe.skip("Test 3: Merchant creates InvoiceAccount", () => {
+  describe("Test 3: Merchant creates InvoiceAccount", () => {
+
+    it("Should fail if mint is not whitelisted by admin", async () => {
+      const    [invoiceAccountForMintB] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("invoice_account"),
+            merchant.publicKey.toBuffer(),
+            mintB.toBuffer(),
+            invoiceSeed.toArrayLike(Buffer, "le", 8),
+          ],
+          program.programId
+        );
+      try {
+        const tx = await program.methods
+          .initializeInvoiceAccount(invoiceSeed)
+          .accountsPartial({
+            config: configAccount,
+            merchant: merchant.publicKey,
+            invoiceAccount: invoiceAccountForMintB,
+            feeVault,
+            mint: mintB,
+            vault: invoiceVault,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([merchant])
+          .rpc();
+        // Should not reach here
+        expect.fail("Expected transaction to fail but it succeeded");
+      } catch (error) {
+        // Expected to fail because account already exists
+        expect(error.message).to.include("An account required by the instruction is missing");
+        console.log("✅ Correctly failed to create invoice account with non-whitelisted mint");
+      }
+    });
+
     it("Should successfully initialize an invoice account", async () => {
       try {
         const tx = await program.methods
@@ -242,10 +293,10 @@ describe("Capstone AirPay Q3 Tests", () => {
             config: configAccount,
             merchant: merchant.publicKey,
             invoiceAccount: invoiceAccount,
-
+            feeVault,
             mint: mint,
             vault: invoiceVault,
-
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
           })
@@ -277,6 +328,7 @@ describe("Capstone AirPay Q3 Tests", () => {
     });
 
 
+
     it("Should fail to initialize invoice account with same seed twice", async () => {
       try {
 
@@ -288,10 +340,10 @@ describe("Capstone AirPay Q3 Tests", () => {
             config: configAccount,
             merchant: merchant.publicKey,
             invoiceAccount: invoiceAccount,
-
+            feeVault,
             mint: mint,
             vault: invoiceVault,
-
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
           })
@@ -325,6 +377,7 @@ describe("Capstone AirPay Q3 Tests", () => {
         [
           Buffer.from("invoice_account"),
           anotherMerchant.publicKey.toBuffer(),
+          mint.toBuffer(),
           invoiceSeed.toArrayLike(Buffer, "le", 8),
         ],
         program.programId
@@ -344,10 +397,11 @@ describe("Capstone AirPay Q3 Tests", () => {
           .accountsPartial({
             config: configAccount,
             merchant: anotherMerchant.publicKey,
-
+            feeVault,
             invoiceAccount: anotherInvoiceAccount,
             mint: mint,
             vault: anotherInvoiceVault,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
           })
@@ -369,5 +423,114 @@ describe("Capstone AirPay Q3 Tests", () => {
       }
     });
 
+  });
+
+  describe("Test 4: Merchant creates InvoiceItem", () => {
+
+
+    it("Should fail when another merchant tries initialize an invoice item account", async () => {
+      const anotherMerchant = Keypair.generate();
+      
+
+      // Airdrop SOL to new merchant
+      await provider.connection.requestAirdrop(
+        anotherMerchant.publicKey,
+        LAMPORTS_PER_SOL
+      );
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const price = new anchor.BN(100);
+      const productId = new anchor.BN(123124);
+      // Get current timestamp in seconds
+      const expiryTimestamp = Math.floor(Date.now() / 1000) + 3600 * 24 * 365 ;  // Expires in a year
+      const expiry = new anchor.BN(expiryTimestamp);
+      const itemsCount = 14;
+    
+      const [invoiceItemAccount] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("invoice_item"),
+            invoiceAccount.toBuffer(),
+            invoiceItemSeed.toArrayLike(Buffer, "le", 8),
+          ],
+          program.programId
+      );
+      try {
+        const tx = await program.methods
+          .initializeInvoiceItemAccount(
+              invoiceItemSeed,
+              price,
+              productId,
+              expiry,
+              itemsCount
+          )
+          .accountsPartial({
+            merchant: anotherMerchant.publicKey,
+            invoiceAccount: invoiceAccount,
+            invoiceItemAccount,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([anotherMerchant])
+          .rpc();
+        expect.fail("Expected transaction to fail but it succeeded");
+      } catch (error) {
+        expect(error.message).to.include("A has one constraint was violated");
+        console.log("✅ Correctly failed to create illegitimate invoice item account");
+      }
+    });
+
+    it("Should successfully initialize an invoice item account", async () => {
+      const price = new anchor.BN(100);
+      const productId = new anchor.BN(123124);
+      // Get current timestamp in seconds
+      const expiryTimestamp = Math.floor(Date.now() / 1000) + 3600 * 24 * 365 ;  // Expires in a year
+      const expiry = new anchor.BN(expiryTimestamp);
+      const itemsCount = 14;
+    
+      const [invoiceItemAccount] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("invoice_item"),
+            invoiceAccount.toBuffer(),
+            invoiceItemSeed.toArrayLike(Buffer, "le", 8),
+          ],
+          program.programId
+      );
+      try {
+        const tx = await program.methods
+          .initializeInvoiceItemAccount(
+              invoiceItemSeed,
+              price,
+              productId,
+              expiry,
+              itemsCount
+          )
+          .accountsPartial({
+            merchant: merchant.publicKey,
+            invoiceAccount: invoiceAccount,
+            invoiceItemAccount,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([merchant])
+          .rpc();
+
+        console.log("Invoice item account initialization transaction signature:", tx);
+
+        // Verify the invoice account was created and initialized correctly
+        const invoiceItemAccountData = await program.account.invoiceItem.fetch(invoiceItemAccount);
+        
+        expect(invoiceItemAccountData.seed.toString()).to.equal(invoiceItemSeed.toString());
+        expect(invoiceItemAccountData.invoiceAccount.toString()).to.equal(invoiceAccount.toString());
+        
+        console.log("✅ Invoice item account created successfully!");
+        console.log("Invoice item account details:", {
+          seed: invoiceItemAccountData.seed.toString(),
+          invoiceAccount: invoiceItemAccountData.invoiceAccount.toString(),
+        });
+
+      } catch (error) {
+
+        console.error("❌ Error initializing invoice account:", error);
+        throw error;
+      }
+    });
   });
 });

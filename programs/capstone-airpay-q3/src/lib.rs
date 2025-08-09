@@ -36,5 +36,23 @@ pub mod capstone_airpay_q3 {
         ctx.accounts.set_mint_as_payment()?;
         Ok(())
     }
+
+    pub fn initialize_invoice_item_account(
+        ctx: Context<InitializeInvoiceItemAccount>, 
+        seed: u64,
+        price: u64,
+        product_id: u64,
+        expiry_ts: u64,
+        items: u16         // How many items for sale
+    ) -> Result<()> {
+        ctx.accounts.initialize_invoice_item_account(
+            seed,
+            price,
+            product_id,
+            expiry_ts,
+            items, 
+            &ctx.bumps
+        )
+    }
 }
 
