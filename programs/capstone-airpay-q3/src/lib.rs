@@ -54,5 +54,11 @@ pub mod capstone_airpay_q3 {
             &ctx.bumps
         )
     }
+
+    pub fn pay_invoice_item(
+        ctx: Context<PayInvoiceItem>
+    ) -> Result<()> {
+        ctx.accounts.pay_invoice_item()
+    }
 }
 

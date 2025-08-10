@@ -54,7 +54,11 @@ impl<'info> InitializeInvoiceAccount<'info> {
             InvoiceAccount { 
                 seed, 
                 merchant: self.merchant.key(), 
-                mint: self.mint.key(), 
+                mint: self.mint.key(),
+                vault: self.vault.key(),
+                fee_vault: self.fee_vault.key(),
+                fee: self.config.fee,
+                basis_points: self.config.basis_points,
                 bump: bumps.invoice_account
             }
         );

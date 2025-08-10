@@ -6,6 +6,10 @@ pub struct InvoiceAccount {
     pub seed: u64,
     pub merchant: Pubkey,
     pub mint: Pubkey,
+    pub vault: Pubkey,
+    pub fee_vault: Pubkey,
+    pub fee: u16,
+    pub basis_points: u16,
     pub bump: u8,
 }
 

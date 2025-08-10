@@ -14,6 +14,8 @@ import {
   createMint,
   getAssociatedTokenAddressSync,
   getAccount,
+  createAssociatedTokenAccount,
+  mintTo
 } from "@solana/spl-token";
 
 import { expect } from "chai";
@@ -29,12 +31,15 @@ describe("Capstone AirPay Q3 Tests", () => {
   // Test accounts
   let admin: Keypair;
   let merchant: Keypair;
+  let user: Keypair;
   let mint: PublicKey;
   let mintB: PublicKey;
   let configAccount: PublicKey;
   let invoiceAccount: PublicKey;
   let feeVault: PublicKey;
   let invoiceVault: PublicKey;
+  let invoiceItemAccount: PublicKey;
+  let userAta: PublicKey;
   
   // Test data
   const configSeed = new anchor.BN(5);
@@ -47,6 +52,7 @@ describe("Capstone AirPay Q3 Tests", () => {
     // Initialize test accounts
     admin = Keypair.generate();
     merchant = Keypair.generate();
+    user = Keypair.generate();
     
     // Airdrop SOL to test accounts
 
@@ -57,6 +63,12 @@ describe("Capstone AirPay Q3 Tests", () => {
     
     await provider.connection.requestAirdrop(
       merchant.publicKey,
+      2 * LAMPORTS_PER_SOL
+
+    );
+
+    await provider.connection.requestAirdrop(
+      user.publicKey,
       2 * LAMPORTS_PER_SOL
 
     );
@@ -130,6 +142,22 @@ describe("Capstone AirPay Q3 Tests", () => {
       true, // allowOwnerOffCurve
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    // Create ATAs
+    userAta = await createAssociatedTokenAccount(
+       provider.connection, 
+       user,
+       mint,
+       user.publicKey
+    );
+    // Mint tokens to user
+    await mintTo(
+      provider.connection,
+      admin,
+      mint,
+      userAta,
+      admin,
+      1000 * 10**6
     );
   });
 
@@ -439,7 +467,7 @@ describe("Capstone AirPay Q3 Tests", () => {
       );
       
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const price = new anchor.BN(100);
+      const price = new anchor.BN(10 * 10**6);
       const productId = new anchor.BN(123124);
       // Get current timestamp in seconds
       const expiryTimestamp = Math.floor(Date.now() / 1000) + 3600 * 24 * 365 ;  // Expires in a year
@@ -479,14 +507,14 @@ describe("Capstone AirPay Q3 Tests", () => {
     });
 
     it("Should successfully initialize an invoice item account", async () => {
-      const price = new anchor.BN(100);
+      const price = new anchor.BN(10* 10**6);
       const productId = new anchor.BN(123124);
       // Get current timestamp in seconds
       const expiryTimestamp = Math.floor(Date.now() / 1000) + 3600 * 24 * 365 ;  // Expires in a year
       const expiry = new anchor.BN(expiryTimestamp);
       const itemsCount = 14;
     
-      const [invoiceItemAccount] = PublicKey.findProgramAddressSync(
+      [invoiceItemAccount] = PublicKey.findProgramAddressSync(
           [
             Buffer.from("invoice_item"),
             invoiceAccount.toBuffer(),
@@ -533,4 +561,56 @@ describe("Capstone AirPay Q3 Tests", () => {
       }
     });
   });
+
+  describe("Test 5: User paying the invoice Item", async () => {
+    it("pays invoice item successfully", async () => {
+     // Get invoice item to check price
+     const invoiceItemData = await program.account.invoiceItem.fetch(invoiceItemAccount);
+     const invoiceAccountData = await program.account.invoiceAccount.fetch(invoiceAccount);
+     const price = invoiceItemData.price;
+     const feeAmount = price.toNumber() *  invoiceAccountData.fee / invoiceAccountData.basisPoints;
+
+     // Get balances before transaction
+     const userBalanceBefore = await provider.connection.getTokenAccountBalance(userAta);
+     const merchantBalanceBefore = await provider.connection.getTokenAccountBalance(invoiceVault);
+     //
+     await program.methods
+       .payInvoiceItem()
+       .accountsPartial({
+         user: user.publicKey,
+         invoiceAccount,
+         invoiceItemAccount,
+         mint,
+         userAta,
+         merchantVault: invoiceVault,
+         feeVault ,
+         tokenProgram: TOKEN_PROGRAM_ID,
+         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+         systemProgram: anchor.web3.SystemProgram.programId,
+       })
+       .signers([user])
+       .rpc();
+     //
+     // Get balances after transaction
+     const userBalanceAfter = await provider.connection.getTokenAccountBalance(userAta);
+     const merchantBalanceAfter = await provider.connection.getTokenAccountBalance(invoiceVault);
+
+     // Assert user balance decreased by price
+     expect(
+       parseInt(userBalanceBefore.value.amount) - parseInt(userBalanceAfter.value.amount)
+     ).equal(
+       price.toNumber()
+     );
+
+     // Assert merchant balance increased by price
+     expect(
+       parseInt(merchantBalanceAfter.value.amount) - parseInt(merchantBalanceBefore.value.amount)
+     ).to.be.equal(
+       price.toNumber() - feeAmount
+     );
+    });
+  });
+  // TODO: Add metadata
+  // TODO: Do UI
+  // TODO: Subscriber Model
 });
