@@ -56,9 +56,10 @@ pub mod capstone_airpay_q3 {
     }
 
     pub fn pay_invoice_item(
-        ctx: Context<PayInvoiceItem>
+        ctx: Context<PayInvoiceItem>,
+        buyer_metadata_hash: [u8; 32] 
     ) -> Result<()> {
-        ctx.accounts.pay_invoice_item()
+        ctx.accounts.pay_invoice_item(buyer_metadata_hash, &ctx.bumps)
     }
 }
 

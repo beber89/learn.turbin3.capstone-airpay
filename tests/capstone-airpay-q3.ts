@@ -19,7 +19,8 @@ import {
 } from "@solana/spl-token";
 
 import { expect } from "chai";
-import { timeStamp } from "console";
+import {createHash} from "crypto";
+import { count, timeStamp } from "console";
 
 
 describe("Capstone AirPay Q3 Tests", () => {
@@ -47,6 +48,7 @@ describe("Capstone AirPay Q3 Tests", () => {
   const invoiceItemSeed = new anchor.BN(678901);
   const fee = 250; // 2.5%
   const basisPoints = 10000;
+  const ITEMS_COUNT = 14;
   
   before(async () => {
     // Initialize test accounts
@@ -472,7 +474,7 @@ describe("Capstone AirPay Q3 Tests", () => {
       // Get current timestamp in seconds
       const expiryTimestamp = Math.floor(Date.now() / 1000) + 3600 * 24 * 365 ;  // Expires in a year
       const expiry = new anchor.BN(expiryTimestamp);
-      const itemsCount = 14;
+      const itemsCount = ITEMS_COUNT;
     
       const [invoiceItemAccount] = PublicKey.findProgramAddressSync(
           [
@@ -573,9 +575,35 @@ describe("Capstone AirPay Q3 Tests", () => {
      // Get balances before transaction
      const userBalanceBefore = await provider.connection.getTokenAccountBalance(userAta);
      const merchantBalanceBefore = await provider.connection.getTokenAccountBalance(invoiceVault);
+
+     // Generate hash in TypeScript test
+     const buyerData = {
+         name: "John Doe",
+         phone: "+1234567890",
+         address: "123 Main St, City, State"
+     };
+     
+     //  This represents a seed for the item sequence number being sold in this InvoiceItemAccount
+     const itemsCountBuffer = Buffer.alloc(2);
+     itemsCountBuffer.writeUint16LE( 0);     // First item to be sold is numbered zero
+     // Creating the PaymentMetadata account
+     const dataString = JSON.stringify(buyerData);
+     const hash = createHash('sha256').update(dataString).digest();
+     const buyerMetadataHash = Array.from(hash);
+     const [ buyerMetadataAccount ] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("pay_invoice_item"),
+        user.publicKey.toBuffer(),
+        invoiceItemAccount.toBuffer(),
+        itemsCountBuffer,
+      ],
+      program.programId
+     );
+
+         
      //
      await program.methods
-       .payInvoiceItem()
+       .payInvoiceItem(buyerMetadataHash)
        .accountsPartial({
          user: user.publicKey,
          invoiceAccount,
@@ -584,6 +612,7 @@ describe("Capstone AirPay Q3 Tests", () => {
          userAta,
          merchantVault: invoiceVault,
          feeVault ,
+         paymentInvoiceMetadata: buyerMetadataAccount,
          tokenProgram: TOKEN_PROGRAM_ID,
          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
          systemProgram: anchor.web3.SystemProgram.programId,
@@ -610,7 +639,6 @@ describe("Capstone AirPay Q3 Tests", () => {
      );
     });
   });
-  // TODO: Add metadata
   // TODO: Do UI
   // TODO: Subscriber Model
 });

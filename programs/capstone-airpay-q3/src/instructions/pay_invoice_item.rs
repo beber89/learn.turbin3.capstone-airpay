@@ -3,13 +3,19 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked},
     associated_token::AssociatedToken,
 };
-use crate::states::{InvoiceItem, InvoiceAccount };
+use crate::states::{InvoiceItem, InvoiceAccount, PaymentMetadata };
 
 
 #[error_code]
 pub enum ErrorCode {
    #[msg("Invoice has expired")]
    InvoiceExpired,
+   #[msg("Soldout")]
+   ItemSoldOut,
+   #[msg("Arithmetic underflow")]
+   UnderflowError,
+   #[msg("Arithmetic overflow")]
+   OverflowError,
 }
 
 
@@ -50,18 +56,59 @@ pub struct PayInvoiceItem <'info> {
        address = invoice_account.fee_vault
    )]
    pub fee_vault: InterfaceAccount<'info, TokenAccount>,
+   /// User details are referenced on payment - e.g. address of user to deliver item to
+   /// The structure of metadata can be determined by merchant since it is saved on chain as a hash
+   #[account(
+       init,
+       payer = user,
+       seeds = [
+           b"pay_invoice_item", 
+           user.key().as_ref(), 
+           invoice_item_account.key().as_ref(), 
+           invoice_item_account.count.to_le_bytes().as_ref()
+       ],
+       space = 8 + PaymentMetadata::INIT_SPACE,
+       bump
+   )]
+   pub payment_invoice_metadata: Account<'info, PaymentMetadata>,
    pub token_program: Interface<'info, TokenInterface>,
    pub associated_token_program: Program<'info, AssociatedToken>,
    pub system_program: Program<'info, System>,
-   // TODO: Use metadata
-
 }
 
 
 impl<'info> PayInvoiceItem <'info> {
    pub fn pay_invoice_item (
-       &mut self, 
+       &mut self,
+       buyer_metadata_hash: [u8; 32],
+       bumps: &PayInvoiceItemBumps
    ) -> Result<()> {
+       if (self.invoice_item_account.remaining == 0)
+       {
+           return err!(ErrorCode::ItemSoldOut);
+       }
+       self.payment_invoice_metadata.set_inner(
+           PaymentMetadata {
+               invoice_item_account: self.invoice_item_account.key(), 
+               price_paid: self.invoice_item_account.price,
+               item_seq_number: self.invoice_item_account.count,
+               // Hash value of {name: , phone: , address: }
+               buyer_metadata: buyer_metadata_hash,
+               bump: bumps.payment_invoice_metadata
+           }
+       );
+
+      // Decrement invoice_item_account.remaining safely
+      self.invoice_item_account.remaining = self.invoice_item_account.remaining
+          .checked_sub(1)
+          .ok_or(ErrorCode::UnderflowError)?;
+
+      // Increment invoice_item_account.count safely  
+      self.invoice_item_account.count = self.invoice_item_account.count
+          .checked_add(1)
+          .ok_or(ErrorCode::OverflowError)?;
+
+
        let clock = Clock::get()?;
        // Verify that time is before expiry 
        if (clock.unix_timestamp as u64 > self.invoice_item_account.expiry_ts)
