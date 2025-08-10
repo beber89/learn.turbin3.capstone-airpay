@@ -10,6 +10,7 @@ pub struct InvoiceAccount {
     pub fee_vault: Pubkey,
     pub fee: u16,
     pub basis_points: u16,
+    pub invoice_account_sequence_number: u32,
     pub bump: u8,
 }
 

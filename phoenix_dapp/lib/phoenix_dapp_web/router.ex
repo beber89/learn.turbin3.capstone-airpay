@@ -21,6 +21,7 @@ defmodule PhoenixDappWeb.Router do
     # Inside the scope "/" block with LiveDemoWeb as the pipeline
     live "/counter", CounterLive, :index
     live "/admin", AdminLive, :index
+    live "/retailer", RetailerLive, :index
   end
 
   # Other scopes may use custom stacks.

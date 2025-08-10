@@ -1,32 +1,205 @@
-<header class="px-4 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-    <div class="flex items-center gap-4">
-      <a href="/">
-        <img src={~p"/images/logo.svg"} width="36" />
-      </a>
-      <p class="bg-brand/5 text-brand rounded-full px-2 font-medium leading-6">
-        v{Application.spec(:phoenix, :vsn)}
-      </p>
-    </div>
-    <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900">
-      <a href="https://twitter.com/elixirphoenix" class="hover:text-zinc-700">
-        @elixirphoenix
-      </a>
-      <a href="https://github.com/phoenixframework/phoenix" class="hover:text-zinc-700">
-        GitHub
-      </a>
-      <a
-        href="https://hexdocs.pm/phoenix/overview.html"
-        class="rounded-lg bg-zinc-100 px-2 py-1 hover:bg-zinc-200/80"
-      >
-        Get Started <span aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </div>
-</header>
-<main class="px-4 py-20 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-2xl">
+<!DOCTYPE html>
+<html lang={@locale || "en"} class={if @dark_mode, do: "dark", else: ""}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title suffix=" · Phoenix Framework">
+      <%= assigns[:page_title] || "PhoenixDapp" %>
+    </.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+  </head>
+
+  <body class={[
+    "bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-200",
+    "antialiased"
+  ]}>
+    <!-- Global Header -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+          <!-- Logo and Title -->
+          <div class="flex items-center gap-4">
+            <.link navigate={~p"/"} class="flex items-center gap-3 group">
+
+              <img src={~p"/images/logo.svg"} width="36" alt="Phoenix Logo" class="group-hover:scale-110 transition-transform duration-200" />
+              <span class="text-xl font-bold text-orange-600 dark:text-orange-400 group-hover:text-orange-700 dark:group-hover:text-orange-300 transition-colors duration-200">
+                Airpay 
+              </span>
+            </.link>
+            
+            <!-- Page Title -->
+            <%= if assigns[:page_title] && assigns[:page_title] != "PhoenixDapp" do %>
+              <span class="text-gray-400 dark:text-gray-500">|</span>
+              <h1 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                <%= assigns[:page_title] %>
+              </h1>
+            <% end %>
+          </div>
+          
+          <!-- Global Controls -->
+          <div class="flex items-center gap-4">
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-4">
+              <.link 
+                navigate={~p"/"} 
+                class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+              >
+                Home
+              </.link>
+              <.link 
+                navigate={~p"/admin"} 
+
+                class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+              >
+                Admin
+              </.link>
+            </nav>
+
+
+            <!-- Language Selector -->
+            <form phx-change="change_locale" class="flex items-center">
+              <select 
+                name="locale" 
+                class="px-3 py-1 rounded border bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm transition-colors duration-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                value={@locale || "en"}
+              >
+                <option value="en">🇺🇸 EN</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="fr">🇫🇷 FR</option>
+                <option value="ar">🇸🇦 AR</option>
+                <option value="de">🇩🇪 DE</option>
+                <option value="zh">🇨🇳 ZH</option>
+              </select>
+            </form>
+
+
+            <!-- Dark Mode Toggle -->
+            <button 
+              phx-click="toggle_dark_mode"
+              class="p-2 rounded-lg transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-orange-500"
+              class={[
+                if(@dark_mode, 
+                  do: "bg-yellow-500 text-gray-900 hover:bg-yellow-400 shadow-lg", 
+                  else: "bg-gray-800 text-white hover:bg-gray-700"
+                )
+              ]}
+              title={if @dark_mode, do: "Switch to Light Mode", else: "Switch to Dark Mode"}
+            >
+              <%= if @dark_mode do %>
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+                </svg>
+              <% else %>
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+              <% end %>
+
+            </button>
+
+            <!-- Mobile Menu Button -->
+            <%!-- <button  --%>
+            <%!--   phx-click="toggle_mobile_menu" --%>
+            <%!----%>
+            <%!--   class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" --%>
+            <%!-- > --%>
+            <%!--   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"> --%>
+            <%!--     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /> --%>
+            <%!--   </svg> --%>
+            <%!-- </button> --%>
+          </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class={[
+          "md:hidden mt-4 border-t border-gray-200 dark:border-gray-700 pt-4 transition-all duration-200",
+          if(assigns[:show_mobile_menu], do: "block", else: "hidden")
+        ]}>
+          <nav class="flex flex-col gap-2">
+            <.link 
+              navigate={~p"/"} 
+              class="px-3 py-2 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+
+              Home
+            </.link>
+            <.link 
+              navigate={~p"/admin"} 
+              class="px-3 py-2 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+
+            >
+              Admin
+
+            </.link>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
     <.flash_group flash={@flash} />
-    {@inner_content}
-  </div>
-</main>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+      <%= @inner_content %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
+      <div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <span>Powered by</span>
+            <.link href="https://phoenixframework.org/" class="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium transition-colors duration-200">
+              Phoenix Framework
+            </.link>
+
+          </div>
+          
+          <div class="text-sm text-gray-500 dark:text-gray-500">
+            © 2025 PhoenixDapp. Built with ❤️ and Elixir.
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+
+<%!-- <header class="px-4 sm:px-6 lg:px-8"> --%>
+<%!--   <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm"> --%>
+<%!--     <div class="flex items-center gap-4"> --%>
+<%!--       <a href="/"> --%>
+<%!--         <img src={~p"/images/logo.svg"} width="36" /> --%>
+<%!--       </a> --%>
+<%!--       <p class="bg-brand/5 text-brand rounded-full px-2 font-medium leading-6"> --%>
+<%!--         v{Application.spec(:phoenix, :vsn)} --%>
+<%!--       </p> --%>
+<%!--     </div> --%>
+<%!--     <div class="flex items-center gap-4 font-semibold leading-6 text-zinc-900"> --%>
+<%!--       <a href="https://twitter.com/elixirphoenix" class="hover:text-zinc-700"> --%>
+<%!--         @elixirphoenix --%>
+<%!--       </a> --%>
+<%!--       <a href="https://github.com/phoenixframework/phoenix" class="hover:text-zinc-700"> --%>
+<%!--         GitHub --%>
+<%!--       </a> --%>
+<%!--       <a --%>
+<%!--         href="https://hexdocs.pm/phoenix/overview.html" --%>
+<%!--         class="rounded-lg bg-zinc-100 px-2 py-1 hover:bg-zinc-200/80" --%>
+<%!--       > --%>
+<%!--         Get Started <span aria-hidden="true">&rarr;</span> --%>
+<%!--       </a> --%>
+<%!--     </div> --%>
+<%!--   </div> --%>
+<%!-- </header> --%>
+<%!-- <main class="px-4 py-20 sm:px-6 lg:px-8"> --%>
+<%!--   <div class="mx-auto max-w-2xl"> --%>
+<%!--     <.flash_group flash={@flash} /> --%>
+<%!--     {@inner_content} --%>
+<%!--   </div> --%>
+<%!-- </main> --%>
+
+

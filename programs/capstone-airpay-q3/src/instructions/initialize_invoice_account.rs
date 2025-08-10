@@ -58,6 +58,7 @@ impl<'info> InitializeInvoiceAccount<'info> {
                 vault: self.vault.key(),
                 fee_vault: self.fee_vault.key(),
                 fee: self.config.fee,
+                invoice_account_sequence_number: 0,
                 basis_points: self.config.basis_points,
                 bump: bumps.invoice_account
             }

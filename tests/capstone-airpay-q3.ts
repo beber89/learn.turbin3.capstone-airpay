@@ -489,7 +489,6 @@ describe("Capstone AirPay Q3 Tests", () => {
           .initializeInvoiceItemAccount(
               invoiceItemSeed,
               price,
-              productId,
               expiry,
               itemsCount
           )
@@ -529,7 +528,6 @@ describe("Capstone AirPay Q3 Tests", () => {
           .initializeInvoiceItemAccount(
               invoiceItemSeed,
               price,
-              productId,
               expiry,
               itemsCount
           )
