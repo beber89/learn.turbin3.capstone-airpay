@@ -15,7 +15,7 @@ defmodule PhoenixDappWeb.AdminLive do
 
       # Config state
       config_initialized: false,
-      fee_percentage: "2.5",
+      fee_percentage: "2",
       config_loading: false,
       config_error: nil,
       config_success: nil,
@@ -25,6 +25,7 @@ defmodule PhoenixDappWeb.AdminLive do
       whitelisted_mints: [],
       custom_mint_address: "",
       selected_stable_token: nil,
+      config_address: nil,
       mint_loading: false,
       mint_error: nil,
       mint_success: nil,
@@ -56,6 +57,7 @@ defmodule PhoenixDappWeb.AdminLive do
 
   def handle_event("initialize_config", _params, socket) do
     socket = assign(socket, config_loading: true, config_error: nil, config_success: nil)
+    socket = push_event(socket, "initialize-config", %{fee_percentage: socket.assigns.fee_percentage})
     {:noreply, socket}
 
   end
@@ -70,9 +72,18 @@ defmodule PhoenixDappWeb.AdminLive do
     {:noreply, assign(socket, custom_mint_address: mint_address)}
   end
 
+  def handle_event("update_config_address", %{"config_address" => config}, socket) do
+    {:noreply, assign(socket, config_address: config)}
+
+  end
+
   def handle_event("add_stable_token", _params, socket) do
     if socket.assigns.selected_stable_token do
       socket = assign(socket, mint_loading: true, mint_error: nil, mint_success: nil)
+        socket = push_event(socket, "add-stable-token", %{
+            selected_stable_token: socket.assigns.selected_stable_token,
+            config_address: socket.assigns.config_address
+      })
       {:noreply, socket}
     else
       {:noreply, assign(socket, mint_error: t("admin.mint.select_token_error"))}
@@ -414,11 +425,9 @@ defmodule PhoenixDappWeb.AdminLive do
                   </button>
                 <% end %>
               </div>
-              
+              <div class="flex gap-3">
               <button 
-
                 phx-hook="AdminMintHook"
-
                 id="add-stable-token-btn"
                 phx-click="add_stable_token"
                 disabled={@mint_loading || !@selected_stable_token}
@@ -454,6 +463,7 @@ defmodule PhoenixDappWeb.AdminLive do
                     )
                   ]}
                 />
+                </div>
                 <button 
                   phx-hook="AdminMintHook"
                   id="add-custom-mint-btn"
@@ -477,34 +487,34 @@ defmodule PhoenixDappWeb.AdminLive do
 
 
             <!-- Whitelisted Mints -->
-            <div>
-              <h3 class="text-lg font-medium mb-3"><%= t("admin.mint.whitelisted") %></h3>
-              <%= if Enum.empty?(@whitelisted_mints) do %>
-                <p class="text-gray-500 italic"><%= t("admin.mint.no_mints") %></p>
-              <% else %>
-                <div class="space-y-2">
-                  <%= for mint <- @whitelisted_mints do %>
-                    <div class={[
-                      "flex items-center justify-between p-3 rounded-lg border transition-colors duration-200",
-                      if(@dark_mode, do: "bg-gray-700 border-gray-600", else: "bg-gray-50 border-gray-200")
-                    ]}>
-                      <div>
-                        <div class="font-medium"><%= mint.name %> (<%= mint.symbol %>)</div>
-                        <div class="text-sm text-gray-500 font-mono"><%= mint.address %></div>
-                      </div>
-
-                      <button 
-                        phx-click="remove_mint"
-                        phx-value-mint={mint.address}
-                        class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
-                      >
-                        <%= t("admin.mint.remove") %>
-                      </button>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
+            <%!-- <div> --%>
+            <%!--   <h3 class="text-lg font-medium mb-3"><%= t("admin.mint.whitelisted") %></h3> --%>
+            <%!--   <%= if Enum.empty?(@whitelisted_mints) do %> --%>
+            <%!--     <p class="text-gray-500 italic"><%= t("admin.mint.no_mints") %></p> --%>
+            <%!--   <% else %> --%>
+            <%!--     <div class="space-y-2"> --%>
+            <%!--       <%= for mint <- @whitelisted_mints do %> --%>
+            <%!--         <div class={[ --%>
+            <%!--           "flex items-center justify-between p-3 rounded-lg border transition-colors duration-200", --%>
+            <%!--           if(@dark_mode, do: "bg-gray-700 border-gray-600", else: "bg-gray-50 border-gray-200") --%>
+            <%!--         ]}> --%>
+            <%!--           <div> --%>
+            <%!--             <div class="font-medium"><%= mint.name %> (<%= mint.symbol %>)</div> --%>
+            <%!--             <div class="text-sm text-gray-500 font-mono"><%= mint.address %></div> --%>
+            <%!--           </div> --%>
+            <%!----%>
+            <%!--           <button  --%>
+            <%!--             phx-click="remove_mint" --%>
+            <%!--             phx-value-mint={mint.address} --%>
+            <%!--             class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200" --%>
+            <%!--           > --%>
+            <%!--             <%= t("admin.mint.remove") %> --%>
+            <%!--           </button> --%>
+            <%!--         </div> --%>
+            <%!--       <% end %> --%>
+            <%!--     </div> --%>
+            <%!--   <% end %> --%>
+            <%!-- </div> --%>
           </div>
         </div>
       </div>

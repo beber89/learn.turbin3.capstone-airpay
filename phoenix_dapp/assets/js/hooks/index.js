@@ -1,4 +1,4 @@
-import { initializeConfig } from '../anchor_client';
+import { setMintAsPayment, initializeConfig } from '../anchor_client';
 
 
 const Hooks = {};
@@ -23,21 +23,49 @@ Hooks.Counter = {
   }
 };
 
+Hooks.AdminMintHook = {
+    mounted() {
+        this.handleEvent("add-stable-token", ({config_address, selected_stable_token}) => {
+            this.setMintAsPayment(config_address, selected_stable_token.address);
+        });
+    },
+    async setMintAsPayment(configAddress, mintAddress) {
+        console.log(mintAddress);
+      try {
+          setMintAsPayment(mintAddress);
+          this.pushEvent("mint-added", {success: true });
+
+      } catch (error) {
+        console.error("❌ Error initializing config:", error);
+
+        // Enhanced error logging
+        if (error.cause) {
+          console.error("Error cause:", error.cause);
+        }
+        if (error.logs) {
+          console.error("Transaction logs:", error.logs);
+        }
+        this.pushEvent("mint-added", {success: false, error});
+
+        throw error;
+
+      }
+    }
+
+
+};
+
 
 // Account address to check balance for
 
-Hooks.AdminWeb3Client= {
+Hooks.AdminConfigHook = {
     mounted() {
-        const seed = 12345;
-        const fee = 100;
-        const basisPoints = 500;       
-        const initializeConfigButton = document.getElementById("admin-initialize-config")
+        const basisPoints = 10000;       
+        // const initializeConfigButton = document.getElementById("admin-initialize-config-btn")
         // Solana balance button
-        if (initializeConfigButton) {
-          this.el.addEventListener("click", async () => {
-            await this.initializeConfig(seed, fee, basisPoints);
-          });
-        }
+        this.handleEvent("initialize-config", ({fee_percentage}) => {
+            this.initializeConfig( fee_percentage * basisPoints/100, basisPoints);
+        });
     },
 
     async getAccountBalance(accountAddress) {
@@ -73,9 +101,10 @@ Hooks.AdminWeb3Client= {
         throw error;
       }
     },
-    async initializeConfig(seed, fee, basisPoints) {
+    async initializeConfig( fee, basisPoints) {
       try {
-          await initializeConfig(seed, fee, basisPoints);
+          await initializeConfig( fee, basisPoints);
+          this.pushEvent("config-initialized", {success: true });
 
       } catch (error) {
         console.error("❌ Error initializing config:", error);
@@ -87,6 +116,7 @@ Hooks.AdminWeb3Client= {
         if (error.logs) {
           console.error("Transaction logs:", error.logs);
         }
+        this.pushEvent("config-initialized", {success: false, error});
 
         throw error;
 

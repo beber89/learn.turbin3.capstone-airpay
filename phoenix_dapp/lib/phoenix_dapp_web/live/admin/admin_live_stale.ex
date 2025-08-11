@@ -91,7 +91,7 @@ defmodule PhoenixDappWeb.AdminLiveStale do
       <div class="mb-6">
         <h2 class="text-xl font-semibold mb-2">Interacting with Solana using Gill</h2>
         <p>Lamports Balance: <span id="admin-sol-balance-display"><%= @message %></span></p>
-        <button phx-hook="AdminWeb3Client" id="admin-initialize-config" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">
+        <button   class="bg-blue-500 text-white px-4 py-2 rounded mt-2">
           Initialize Config 
         </button>
       </div>
