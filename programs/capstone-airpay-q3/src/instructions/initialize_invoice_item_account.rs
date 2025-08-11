@@ -10,6 +10,7 @@ pub struct InitializeInvoiceItemAccount<'info> {
    pub merchant: Signer<'info>,
    /// invoice_account created by calling initialize_invoice_account
    #[account(
+       mut,
        has_one = merchant,
        owner = crate::ID  // Ensures invoice_account is owned by this program
    )]
@@ -18,7 +19,7 @@ pub struct InitializeInvoiceItemAccount<'info> {
    #[account(
        init,
        payer = merchant,
-       seeds = [b"invoice_item", invoice_account.key().as_ref(), seed.to_le_bytes().as_ref()],
+       seeds = [b"invoice_item", invoice_account.key().as_ref(), invoice_account.invoice_account_sequence_number.to_le_bytes().as_ref()],
        space = 8 + InvoiceItem::INIT_SPACE,
        bump,
    )]
@@ -45,6 +46,20 @@ impl<'info> InitializeInvoiceItemAccount<'info> {
        let mut data_to_hash = Vec::new();
        data_to_hash.extend_from_slice(&sequence_number.to_le_bytes());
        data_to_hash.extend_from_slice(self.invoice_account.key().as_ref());
+       // Update sequence_number
+       self.invoice_account.set_inner(
+           InvoiceAccount {
+               invoice_account_sequence_number: self.invoice_account.invoice_account_sequence_number,
+               seed: self.invoice_account.seed,
+               merchant: self.invoice_account.merchant,
+               mint: self.invoice_account.mint,
+               vault: self.invoice_account.vault,
+               fee_vault: self.invoice_account.fee_vault,
+               fee: self.invoice_account.fee,
+               basis_points: self.invoice_account.basis_points,
+               bump: self.invoice_account.bump
+           }
+       );
 
        // Hash the combined data
        let hash_result = hash(&data_to_hash).to_bytes();

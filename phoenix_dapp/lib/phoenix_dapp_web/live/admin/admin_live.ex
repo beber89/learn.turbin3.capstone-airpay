@@ -3,12 +3,12 @@ defmodule PhoenixDappWeb.AdminLive do
   on_mount {PhoenixDappWeb.GlobalSettingsHook, :default}
 
   @stable_tokens [
-
-    %{name: "USDC", address: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", symbol: "USDC"},
-    %{name: "USDT", address: "EJwZgeZrdC8TXTQbQBoL6bfuAnFUUy1PVCMB4DYPzVaS", symbol: "USDT"},
+    %{name: "USDC", address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", symbol: "USDC"},
+    %{name: "USDT", address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", symbol: "USDT"},
     %{name: "DAI", address: "EjmyN6qEC1Tf1JxiG1ae7UTJhUxSwk1TCWNWqxWV4J6o", symbol: "DAI"},
     %{name: "PYUSD", address: "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo", symbol: "PYUSD"}
   ]
+
 
   def mount(_params, _session, socket) do
     {:ok, assign(socket,
@@ -80,9 +80,8 @@ defmodule PhoenixDappWeb.AdminLive do
   def handle_event("add_stable_token", _params, socket) do
     if socket.assigns.selected_stable_token do
       socket = assign(socket, mint_loading: true, mint_error: nil, mint_success: nil)
-        socket = push_event(socket, "add-stable-token", %{
-            selected_stable_token: socket.assigns.selected_stable_token,
-            config_address: socket.assigns.config_address
+      socket = push_event(socket, "add-stable-token", %{
+          selected_stable_token: socket.assigns.selected_stable_token,
       })
       {:noreply, socket}
     else

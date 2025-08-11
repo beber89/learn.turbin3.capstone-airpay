@@ -1,4 +1,9 @@
-import { setMintAsPayment, initializeConfig } from '../anchor_client';
+import { 
+    setMintAsPayment, 
+    initializeConfig, 
+    initializeInvoiceAccount,
+    initializeInvoiceItemAccount
+} from '../anchor_client';
 
 
 const Hooks = {};
@@ -25,14 +30,13 @@ Hooks.Counter = {
 
 Hooks.AdminMintHook = {
     mounted() {
-        this.handleEvent("add-stable-token", ({config_address, selected_stable_token}) => {
-            this.setMintAsPayment(config_address, selected_stable_token.address);
+        this.handleEvent("add-stable-token", ({ selected_stable_token}) => {
+            this.setMintAsPayment( selected_stable_token.address);
         });
     },
-    async setMintAsPayment(configAddress, mintAddress) {
-        console.log(mintAddress);
+    async setMintAsPayment( mintAddress) {
       try {
-          setMintAsPayment(mintAddress);
+          await setMintAsPayment(mintAddress);
           this.pushEvent("mint-added", {success: true });
 
       } catch (error) {
@@ -117,10 +121,68 @@ Hooks.AdminConfigHook = {
           console.error("Transaction logs:", error.logs);
         }
         this.pushEvent("config-initialized", {success: false, error});
-
-        throw error;
-
       }
     }
 };
+
+Hooks.RetailerMintHook = {
+    mounted() {
+        this.sequenceNumber = 0;
+        this.handleEvent("initialize-invoice-account", ({ selected_mint}) => {
+            this.initializeInvoiceAccount( selected_mint.address);
+        });
+        this.handleEvent("initialize-invoice-item-account", ({ 
+            itemName,
+            price,
+            quantity,
+            expiry,
+            mint
+        }) => {
+            this.initializeInvoiceItemAccount( mint, price, quantity, expiry);
+        });
+    },
+    async initializeInvoiceAccount( mintAddress) {
+      try {
+          await initializeInvoiceAccount(mintAddress);
+          this.pushEvent("mint-added", {success: true });
+
+      } catch (error) {
+        console.error("❌ Error initializing config:", error);
+
+        // Enhanced error logging
+        if (error.cause) {
+          console.error("Error cause:", error.cause);
+        }
+        if (error.logs) {
+          console.error("Transaction logs:", error.logs);
+        }
+        this.pushEvent("mint-added", {success: false, error: "Transaction Failed: Invoice account could not be created"});
+      }
+    },
+    async initializeInvoiceItemAccount( mintAddress, price, quantity, expiry) {
+      try {
+          await initializeInvoiceItemAccount(this.sequenceNumber, mintAddress, price, quantity, expiry);
+          this.sequenceNumber += 1;
+          this.pushEvent("item-added", {success: true });
+
+      } catch (error) {
+        console.error("❌ Error initializing config:", error);
+
+        // Enhanced error logging
+        if (error.cause) {
+          console.error("Error cause:", error.cause);
+        }
+        if (error.logs) {
+          console.error("Transaction logs:", error.logs);
+        }
+        this.pushEvent("item-added", {success: false, error: "Transaction Failed: Item could not be created"});
+      }
+    }
+
+
+
+};
+
+
+
 export default Hooks

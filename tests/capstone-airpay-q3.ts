@@ -46,6 +46,7 @@ describe("Capstone AirPay Q3 Tests", () => {
   const configSeed = new anchor.BN(5);
   const invoiceSeed = new anchor.BN(67890);
   const invoiceItemSeed = new anchor.BN(678901);
+  const zero = new anchor.BN(0);
   const fee = 250; // 2.5%
   const basisPoints = 10000;
   const ITEMS_COUNT = 14;
@@ -480,7 +481,7 @@ describe("Capstone AirPay Q3 Tests", () => {
           [
             Buffer.from("invoice_item"),
             invoiceAccount.toBuffer(),
-            invoiceItemSeed.toArrayLike(Buffer, "le", 8),
+            zero.toArrayLike(Buffer, "le", 4),
           ],
           program.programId
       );
@@ -519,7 +520,7 @@ describe("Capstone AirPay Q3 Tests", () => {
           [
             Buffer.from("invoice_item"),
             invoiceAccount.toBuffer(),
-            invoiceItemSeed.toArrayLike(Buffer, "le", 8),
+            zero.toArrayLike(Buffer, "le", 4),
           ],
           program.programId
       );
