@@ -1,0 +1,39 @@
+# .dockerignore
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+
+docker-compose.yml
+
+# Elixir
+/_build
+
+/deps
+*.o
+*.beam
+*.plt
+*.ex~
+*.ex.swp
+
+*.ex.swo
+.elixir_ls/
+erl_crash.dump
+
+
+# Phoenix
+/priv/static/assets/
+/priv/static/cache_manifest.json
+
+# npm/Node.js
+/assets/node_modules/
+npm-debug.log
+node_modules/
+
+
+# Environment files
+.env
+.env.local
+.env.*.local
+

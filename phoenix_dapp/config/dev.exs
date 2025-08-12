@@ -2,10 +2,10 @@ import Config
 
 # Configure your database
 config :phoenix_dapp, PhoenixDapp.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "phoenix_dapp_dev",
+  username: System.get_env("DATABASE_USER", "postgres"),
+  password: System.get_env("DATABASE_PASSWORD", "postgres"),
+  hostname: System.get_env("DATABASE_HOST", "localhost"),
+  database: System.get_env("DATABASE_NAME", "phoenix_dapp_dev"),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

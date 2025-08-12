@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: phoenix_dapp_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  phoenix_app:
+
+    build: .
+
+    container_name: phoenix_app
+    environment:
+      DATABASE_URL: "ecto://postgres:postgres@postgres_db/phoenix_dapp_dev"
+      DATABASE_HOST: postgres_db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: phoenix_dapp_dev
+      MIX_ENV: dev
+      PORT: 4000
+    ports:
+      - "4000:4000"
+
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/deps
+
+      - /app/_build
+      - /app/assets/node_modules
+    stdin_open: true
+    tty: true
+
+
+volumes:
+  postgres_data:
+
