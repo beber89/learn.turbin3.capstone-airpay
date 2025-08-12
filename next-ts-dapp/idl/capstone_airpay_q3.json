@@ -1,0 +1,875 @@
+{
+  "address": "J4aBD9W7P8sij5dLP4KZLiJZrCZXoRFazpGaVhcZuwZZ",
+  "metadata": {
+    "name": "capstone_airpay_q3",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "initialize_config",
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              },
+              {
+                "kind": "arg",
+                "path": "seed"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "seed",
+          "type": "u64"
+        },
+        {
+          "name": "fee",
+          "type": "u16"
+        },
+        {
+          "name": "basis_points",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "initialize_invoice_account",
+      "discriminator": [
+        73,
+        150,
+        245,
+        48,
+        139,
+        10,
+        209,
+        27
+      ],
+      "accounts": [
+        {
+          "name": "config"
+        },
+        {
+          "name": "merchant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "invoice_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  118,
+                  111,
+                  105,
+                  99,
+                  101,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "merchant"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "arg",
+                "path": "seed"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "fee_vault",
+          "docs": [
+            "Fee vault that must exist for this mint (proves mint is whitelisted)",
+            "If not, this will throw error"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "config"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "invoice_account"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "seed",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_invoice_item_account",
+      "discriminator": [
+        75,
+        33,
+        30,
+        50,
+        1,
+        238,
+        90,
+        79
+      ],
+      "accounts": [
+        {
+          "name": "merchant",
+          "docs": [
+            "merchant is the creator of this InvoiceItem"
+          ],
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "invoice_account"
+          ]
+        },
+        {
+          "name": "invoice_account",
+          "docs": [
+            "invoice_account created by calling initialize_invoice_account"
+          ],
+          "writable": true
+        },
+        {
+          "name": "invoice_item_account",
+          "docs": [
+            "The account we aim to create here"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  110,
+                  118,
+                  111,
+                  105,
+                  99,
+                  101,
+                  95,
+                  105,
+                  116,
+                  101,
+                  109
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "invoice_account"
+              },
+              {
+                "kind": "account",
+                "path": "invoice_account.invoice_account_sequence_number",
+                "account": "InvoiceAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "seed",
+          "type": "u64"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "expiry_ts",
+          "type": "u64"
+        },
+        {
+          "name": "items",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "pay_invoice_item",
+      "discriminator": [
+        2,
+        69,
+        98,
+        193,
+        236,
+        146,
+        194,
+        133
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "docs": [
+            "User is the buyer/payer of the invoice"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "invoice_account",
+          "docs": [
+            "invoice_account created by calling initialize_invoice_account by merchant"
+          ],
+          "relations": [
+            "invoice_item_account"
+          ]
+        },
+        {
+          "name": "invoice_item_account"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "user_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "merchant_vault",
+          "writable": true
+        },
+        {
+          "name": "fee_vault",
+          "writable": true
+        },
+        {
+          "name": "payment_invoice_metadata",
+          "docs": [
+            "User details are referenced on payment - e.g. address of user to deliver item to",
+            "The structure of metadata can be determined by merchant since it is saved on chain as a hash"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  121,
+                  95,
+                  105,
+                  110,
+                  118,
+                  111,
+                  105,
+                  99,
+                  101,
+                  95,
+                  105,
+                  116,
+                  101,
+                  109
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "invoice_item_account"
+              },
+              {
+                "kind": "account",
+                "path": "invoice_item_account.count",
+                "account": "InvoiceItem"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "buyer_metadata_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "set_mint_as_payment",
+      "discriminator": [
+        232,
+        249,
+        189,
+        233,
+        153,
+        5,
+        4,
+        61
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "Vault needed to collect payment fees"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "config"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "InvoiceAccount",
+      "discriminator": [
+        105,
+        207,
+        226,
+        227,
+        85,
+        35,
+        132,
+        40
+      ]
+    },
+    {
+      "name": "InvoiceItem",
+      "discriminator": [
+        250,
+        1,
+        124,
+        216,
+        139,
+        151,
+        119,
+        92
+      ]
+    },
+    {
+      "name": "PaymentMetadata",
+      "discriminator": [
+        42,
+        140,
+        14,
+        77,
+        159,
+        203,
+        253,
+        80
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvoiceExpired",
+      "msg": "Invoice has expired"
+    },
+    {
+      "code": 6001,
+      "name": "ItemSoldOut",
+      "msg": "Soldout"
+    },
+    {
+      "code": 6002,
+      "name": "UnderflowError",
+      "msg": "Arithmetic underflow"
+    },
+    {
+      "code": 6003,
+      "name": "OverflowError",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seed",
+            "type": "u64"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee",
+            "docs": [
+              "fee is the amount deducted by protocol in transfers"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "basis_points",
+            "docs": [
+              "basis_points represent the units of fees"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvoiceAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seed",
+            "type": "u64"
+          },
+          {
+            "name": "merchant",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee",
+            "type": "u16"
+          },
+          {
+            "name": "basis_points",
+            "type": "u16"
+          },
+          {
+            "name": "invoice_account_sequence_number",
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvoiceItem",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seed",
+            "type": "u64"
+          },
+          {
+            "name": "invoice_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "product_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "creation_ts",
+            "type": "u64"
+          },
+          {
+            "name": "expiry_ts",
+            "type": "u64"
+          },
+          {
+            "name": "remaining",
+            "type": "u16"
+          },
+          {
+            "name": "count",
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PaymentMetadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "invoice_item_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "price_paid",
+            "type": "u64"
+          },
+          {
+            "name": "item_seq_number",
+            "type": "u16"
+          },
+          {
+            "name": "buyer_metadata",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

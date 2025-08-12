@@ -10,6 +10,10 @@ use crate::states::Config;
 pub struct SetMintAsPayment<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
+    // #[account(
+    //     seeds = [b"config", &config.seed.to_le_bytes()], // just for codama 
+    //     bump,
+    // )]
     pub config: Account<'info, Config>,
     // this mint specifies the Token in which the fees are being paid in
     #[account(
