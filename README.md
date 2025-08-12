@@ -139,7 +139,7 @@ The application will be available running at `http://localhost:4000`
 1. Ensure you have [Phantom Wallet](https://phantom.app/) installed in your browser.
 2. Make sure Surfpool is running (`surfpool start`) at project root.
 3. Open and connect your Phantom wallet to **localhost/localnet**.
-4. Navigate to `http://localhost:4000` and connect your wallet.
+4. Navigate to `http://localhost:4000/admin` and connect your wallet.
 
 
 ## 📝 Usage Scenario
